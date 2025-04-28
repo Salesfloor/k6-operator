@@ -2,62 +2,109 @@
 
 # k6 Operator
 
-`grafana/k6-operator` is a Kubernetes operator for running distributed [k6](https://github.com/grafana/k6) tests in your cluster. k6 Operator introduces two CRDs:
+`grafana/k6-operator` is a Kubernetes operator for running distributed [k6](https://github.com/grafana/k6) tests in your cluster.
 
-- `TestRun` CRD
-- `PrivateLoadZone` CRD
+This Salesfloor repository is a fork of the original [K6 Operator](https://github.com/grafana/k6-operator) repository. Please refer to the original repository for common info about K6 Operator.
 
-The `TestRun` CRD is a representation of a single k6 test executed once. `TestRun` supports various configuration options that allow you to adapt to different Kubernetes setups. You can find a description of the more common options [here](https://grafana.com/docs/k6/latest/set-up/set-up-distributed-k6/usage/common-options/), and the full list of options can be found in the [definition itself](https://github.com/grafana/k6-operator/blob/main/config/crd/bases/k6.io_testruns.yaml).
+## Salesfloor Features
 
-The `PrivateLoadZone` CRD is a representation of a [load zone](https://grafana.com/docs/grafana-cloud/testing/k6/author-run/use-load-zones/), which is a k6 term for a set of nodes within a cluster designated to execute k6 test runs. `PrivateLoadZone` is integrated with [Grafana Cloud k6](https://grafana.com/products/cloud/k6/) and requires a [Grafana Cloud account](https://grafana.com/auth/sign-up/create-user). You can find a guide describing how to set up a `PrivateLoadZone` [here](https://grafana.com/docs/grafana-cloud/testing/k6/author-run/private-load-zone-v2/), while billing details can be found [here](https://grafana.com/docs/grafana-cloud/cost-management-and-billing/understand-your-invoice/k6-invoice/).
+- Runner jobs send 'test_starttime' tag as a part of real time output
 
-## Documentation
+## Salesfloor Specific Documentation
 
-You can find the latest k6 Operator documentation in the [Grafana k6 OSS docs](https://grafana.com/docs/k6/latest/set-up/set-up-distributed-k6/usage/common-options/).
+Steps to make a change available on SF Kubernetes:
 
-For additional resources:
+1. make a change in the repository
+2. build a new image
+3. push the image to ghrc.io/salesfloor docker registry
+4. install the updated K6 Operator to SF Kubernetes on Google Cloud
 
-- :book: A guide [Running distributed tests](https://grafana.com/docs/k6/latest/testing-guides/running-distributed-tests/).
-- :movie_camera: Grafana Office Hours [Load Testing on Kubernetes with k6 Private Load Zones](https://www.youtube.com/watch?v=RXLavQT58YA).
+See below details on how to do it.
 
-Common samples are available in the `config/samples` and `e2e/` folders in this repo, both for the `TestRun` and `PrivateLoadZone` CRDs.
+### Pre-requisites (Setup)
 
-## Contributing
+1. Install docker and make sure docker daemon is running
+2. Install kubectl
+3. Install gcloud
+4. Authorize on google cloud
 
-### Requests and feedback
+```bash
+gcloud auth login
+```
 
-We are always interested in your feedback! If you encounter problems during the k6 Operator usage, check out the [troubleshooting guide](https://grafana.com/docs/k6/latest/set-up/set-up-distributed-k6/troubleshooting/). If you have questions on how to use the k6 Operator, you can post them on the [Grafana community forum](https://community.grafana.com/c/grafana-k6/k6-operator/73).
+5. Connect to the 'Performance tests K6' project
 
-For new feature requests and bug reports, consider opening an issue in this repository. First, check the [existing issues](https://github.com/grafana/k6-operator/issues) in case a similar report already exists. If it does, add a comment about your use case or upvote it.
+```bash
+gcloud container clusters get-credentials  \
+       --project "perfomance-tests1-k6" \
+       --region "northamerica-northeast1" \
+      cluster-k6-tests
+```
 
-For bug reports, please use [this template](https://github.com/grafana/k6-operator/issues/new?assignees=&labels=bug&projects=&template=bug.yaml). If you think there is a missing feature, please use [this template](https://github.com/grafana/k6-operator/issues/new?assignees=&labels=enhancement&projects=&template=feat_req.yaml).
+6. In your gitHub account (with access to Salesfloor organization) create [Personal Access Token (Classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) and select access permissions:
+    - `read:packages`
+    - `write:packages`
+    - `delete:packages`
 
-### Development
+Note! please select the soonest available token expiration option. As long as K6 Operator may need updating and re-installing rarely, there is no need for a non-expiring token.
 
-<!-- TODO: pull out into contributing guide -->
+7. Set environment variables with the github token info
 
-When submitting a PR, it's preferable to work on an open issue. If an issue does not exist, create it. An issue allows us to validate the problem, gather additional feedback from the community, and avoid unnecessary work.
+``` bash
+    export GITHUB_USERNAME=<github-username> # the account where token is created
+    export GITHUB_EMAIL=<github-email>
+    export GITHUB_PACKAGES_TOKEN=<personal-access-token>
+```
 
-<!-- 
-Some GitHub issues have a ["good first issue" label](https://github.com/grafana/k6-operator/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22). These are the issues that should be good for newcomers. The issues with the ["help wanted" label](https://github.com/grafana/k6-operator/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) are the ones that could use some community help or additional user feedback. -->
+8. Login Docker to ghcr.io (to push images to ghcr.io/salesfloor/...)
 
-There are many options for setting up a local Kubernetes cluster for development, and any of them can be used for local development of the k6 Operator. One option is to create a [kind cluster](https://kind.sigs.k8s.io/docs/user/quick-start/).
+```bash
+make docker-login
+```
 
-Additionally, you'll need to install the following tooling:
+9. Craete github-packages-secret secret on Kubernetes (so that Kubernetes can pull images from ghcr.io/salesfloor/...):
 
-- [Golang](https://go.dev/doc/install)
-- [kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/)
-- [operator-sdk](https://sdk.operatorframework.io/docs/installation/): optional as most common changes can be done without it
+```bash
+make kube-secret
+```
 
-To execute unit tests, use these commands:
+### Make changes
+
+Make sure to update unit tests for your changes. To execute unit tests, use these commands:
 
 ```bash
 make test-setup # only need to run once
 make test
 ```
 
-To execute e2e test locally:
+### Build image
 
-- `make e2e` for kustomize and `make e2e-helm` for Helm
-- validate tests have been run
-- `make e2e-cleanup`
+```bash
+make docker-build
+```
+
+### Push image to Docker Registry
+
+```bash
+make docker-push
+```
+
+### Install K6 Operator to Kubernetes
+
+```bash
+make deploy
+```
+
+### Re-Install K6 Operator
+
+To delete K6 Operator use `make delete` command.
+
+Note! 
+
+## Troubleshooting
+
+- If `github-packages-secret` is absent or has wrong info `make deploy` command will still finish successfully. But Initializer job on Kubernetes will show Image Pull Error.
+
+- `make delete` command also deletes `k6-operator-system` namespace together with related secrets. So make sure to run `make kube-secret` command again before using `make deploy` next time.
+
+- Google Cloud Web interface is not quite transparent/clear in describing details of errors. `kubectl describe pod <pod-name>` command is much more helpful in troubleshooting.
