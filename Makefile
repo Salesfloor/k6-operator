@@ -17,7 +17,7 @@ CONTROLLER_GEN=$(GOBIN)/controller-gen
 # Image to use for building Go
 GO_BUILDER_IMG ?= "golang:1.23"
 # Image URL to use all building/pushing image targets
-IMG_NAME ?= ghcr.io/grafana/k6-operator
+IMG_NAME ?= ghcr.io/salesfloor/k6-operator
 IMG_TAG ?= latest
 # Default dockerfile to build
 DOCKERFILE ?= "Dockerfile.controller"
@@ -29,6 +29,14 @@ GOBIN=$(shell go env GOPATH)/bin
 else
 GOBIN=$(shell go env GOBIN)
 endif
+
+# [Salesfloor specific]
+# K6 Operator namespace
+K6_NAMESPACE := k6-operator-system
+# GitHub Docker Registry Token details
+GITHUB_USERNAME := ${GITHUB_USERNAME}
+GITHUB_EMAIL := ${GITHUB_EMAIL}
+GITHUB_PACKAGES_TOKEN := ${GITHUB_PACKAGES_TOKEN}
 
 all: manager
 
@@ -104,9 +112,9 @@ lint:
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
-# Build the docker image
+# [Salesfloor updated] Build the docker image
 docker-build: test
-	docker build . -t ${IMG_NAME}:${IMG_TAG} -f ${DOCKERFILE} --build-arg GO_BUILDER_IMG=${GO_BUILDER_IMG}
+	docker buildx build --platform linux/amd64,linux/arm64 . -t ${IMG_NAME}:${IMG_TAG} -f ${DOCKERFILE} --build-arg GO_BUILDER_IMG=${GO_BUILDER_IMG}
 
 # Push the docker image
 docker-push:
@@ -136,6 +144,31 @@ KUSTOMIZE=$(GOBIN)/kustomize
 else
 KUSTOMIZE=$(shell which kustomize)
 endif
+
+# [Salesfloor new] Login Docker to GitHub
+.PHONY: docker-login
+docker-login:
+	echo $(GITHUB_PACKAGES_TOKEN) | docker login ghcr.io -u $(GITHUB_USERNAME) --password-stdin 
+
+# [Salesfloor new] Create secret in Kubernetes to pull K6 Operator image from Salesfloor private docker registry
+.PHONY: kube-secret
+kube-secret:
+	kubectl get namespace $(K6_NAMESPACE) > /dev/null 2>&1 || kubectl create namespace $(K6_NAMESPACE)
+ifndef GITHUB_USERNAME
+	$(error GITHUB_USERNAME is undefined)
+endif
+ifndef GITHUB_PACKAGES_TOKEN
+	$(error GITHUB_PACKAGES_TOKEN is undefined)
+endif
+ifndef GITHUB_EMAIL
+	$(error GITHUB_EMAIL is undefined)
+endif
+	kubectl create secret docker-registry github-packages-secret \
+	--docker-server=ghcr.io \
+	--docker-username=$(GITHUB_USERNAME) \
+	--docker-password=$(GITHUB_PACKAGES_TOKEN) \
+	--docker-email=$(GITHUB_EMAIL) \
+	-n $(K6_NAMESPACE)
 
 # Generate bundle manifests and metadata, then validate generated files.
 .PHONY: bundle
