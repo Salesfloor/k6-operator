@@ -2,8 +2,10 @@ package jobs
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -321,7 +323,7 @@ func TestNewRunnerJob(t *testing.T) {
 						Image:           "ghcr.io/grafana/k6-operator:latest-runner",
 						ImagePullPolicy: corev1.PullNever,
 						Name:            "k6",
-						Command:         []string{"k6", "run", "--quiet", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1"},
+						Command:         []string{"k6", "run", "--quiet", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1", "--tag", fmt.Sprintf("test_starttime='%s'", time.Now().Format("01/02/2006 15:04:05"))},
 						Env:             []corev1.EnvVar{},
 						Resources:       corev1.ResourceRequirements{},
 						VolumeMounts:    script.VolumeMount(),
@@ -454,7 +456,7 @@ func TestNewRunnerJobNoisy(t *testing.T) {
 						Image:           "ghcr.io/grafana/k6-operator:latest-runner",
 						ImagePullPolicy: "",
 						Name:            "k6",
-						Command:         []string{"k6", "run", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1"},
+						Command:         []string{"k6", "run", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1", "--tag", fmt.Sprintf("test_starttime='%s'", time.Now().Format("01/02/2006 15:04:05"))},
 						Env:             []corev1.EnvVar{},
 						Resources:       corev1.ResourceRequirements{},
 						VolumeMounts:    script.VolumeMount(),
@@ -569,7 +571,7 @@ func TestNewRunnerJobUnpaused(t *testing.T) {
 						Image:           "ghcr.io/grafana/k6-operator:latest-runner",
 						ImagePullPolicy: "",
 						Name:            "k6",
-						Command:         []string{"k6", "run", "--quiet", "/test/test.js", "--address=0.0.0.0:6565", "--tag", "instance_id=1", "--tag", "job_name=test-1"},
+						Command:         []string{"k6", "run", "--quiet", "/test/test.js", "--address=0.0.0.0:6565", "--tag", "instance_id=1", "--tag", "job_name=test-1", "--tag", fmt.Sprintf("test_starttime='%s'", time.Now().Format("01/02/2006 15:04:05"))},
 						Env:             []corev1.EnvVar{},
 						Resources:       corev1.ResourceRequirements{},
 						VolumeMounts:    script.VolumeMount(),
@@ -684,7 +686,7 @@ func TestNewRunnerJobArguments(t *testing.T) {
 						Image:           "ghcr.io/grafana/k6-operator:latest-runner",
 						ImagePullPolicy: "",
 						Name:            "k6",
-						Command:         []string{"k6", "run", "--quiet", "--cool-thing", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1"},
+						Command:         []string{"k6", "run", "--quiet", "--cool-thing", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1", "--tag", fmt.Sprintf("test_starttime='%s'", time.Now().Format("01/02/2006 15:04:05"))},
 						Env:             []corev1.EnvVar{},
 						Resources:       corev1.ResourceRequirements{},
 						VolumeMounts:    script.VolumeMount(),
@@ -800,7 +802,7 @@ func TestNewRunnerJobServiceAccount(t *testing.T) {
 						Image:           "ghcr.io/grafana/k6-operator:latest-runner",
 						ImagePullPolicy: "",
 						Name:            "k6",
-						Command:         []string{"k6", "run", "--quiet", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1"},
+						Command:         []string{"k6", "run", "--quiet", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1", "--tag", fmt.Sprintf("test_starttime='%s'", time.Now().Format("01/02/2006 15:04:05"))},
 						Env:             []corev1.EnvVar{},
 						Resources:       corev1.ResourceRequirements{},
 						VolumeMounts:    script.VolumeMount(),
@@ -917,7 +919,7 @@ func TestNewRunnerJobIstio(t *testing.T) {
 						Image:           "ghcr.io/grafana/k6-operator:latest-runner",
 						ImagePullPolicy: "",
 						Name:            "k6",
-						Command:         []string{"scuttle", "k6", "run", "--quiet", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1"},
+						Command:         []string{"scuttle", "k6", "run", "--quiet", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1", "--tag", fmt.Sprintf("test_starttime='%s'", time.Now().Format("01/02/2006 15:04:05"))},
 						Env: []corev1.EnvVar{
 							{
 								Name:  "ENVOY_ADMIN_API",
@@ -1046,7 +1048,7 @@ func TestNewRunnerJobCloud(t *testing.T) {
 						Image:           "ghcr.io/grafana/k6-operator:latest-runner",
 						ImagePullPolicy: "",
 						Name:            "k6",
-						Command:         []string{"k6", "run", "--quiet", "--out", "cloud", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1"},
+						Command:         []string{"k6", "run", "--quiet", "--out", "cloud", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1", "--tag", fmt.Sprintf("test_starttime='%s'", time.Now().Format("01/02/2006 15:04:05"))},
 						Env: append(aggregationEnvVars,
 							corev1.EnvVar{
 								Name:  "K6_CLOUD_PUSH_REF_ID",
@@ -1172,7 +1174,7 @@ func TestNewRunnerJobLocalFile(t *testing.T) {
 						Image:           "ghcr.io/grafana/k6-operator:latest-runner",
 						ImagePullPolicy: "",
 						Name:            "k6",
-						Command:         []string{"sh", "-c", "if [ ! -f /test/test.js ]; then echo \"LocalFile not found exiting...\"; exit 1; fi;\nk6 run --quiet /test/test.js --address=0.0.0.0:6565 --paused --tag instance_id=1 --tag job_name=test-1"},
+						Command:         []string{"sh", "-c", fmt.Sprintf("if [ ! -f /test/test.js ]; then echo \"LocalFile not found exiting...\"; exit 1; fi;\nk6 run --quiet /test/test.js --address=0.0.0.0:6565 --paused --tag instance_id=1 --tag job_name=test-1 --tag test_starttime='%s'", time.Now().Format("01/02/2006 15:04:05"))},
 						Env:             []corev1.EnvVar{},
 						Resources:       corev1.ResourceRequirements{},
 						VolumeMounts:    script.VolumeMount(),
@@ -1305,7 +1307,7 @@ func TestNewRunnerJobWithInitContainer(t *testing.T) {
 						Image:           "ghcr.io/grafana/k6-operator:latest-runner",
 						ImagePullPolicy: corev1.PullNever,
 						Name:            "k6",
-						Command:         []string{"k6", "run", "--quiet", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1"},
+						Command:         []string{"k6", "run", "--quiet", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1", "--tag", fmt.Sprintf("test_starttime='%s'", time.Now().Format("01/02/2006 15:04:05"))},
 						Env:             []corev1.EnvVar{},
 						Resources:       corev1.ResourceRequirements{},
 						VolumeMounts:    script.VolumeMount(),
@@ -1484,7 +1486,7 @@ func TestNewRunnerJobWithVolume(t *testing.T) {
 						Image:           "ghcr.io/grafana/k6-operator:latest-runner",
 						ImagePullPolicy: corev1.PullNever,
 						Name:            "k6",
-						Command:         []string{"k6", "run", "--quiet", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1"},
+						Command:         []string{"k6", "run", "--quiet", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1", "--tag", fmt.Sprintf("test_starttime='%s'", time.Now().Format("01/02/2006 15:04:05"))},
 						Env:             []corev1.EnvVar{},
 						Resources:       corev1.ResourceRequirements{},
 						VolumeMounts:    expectedVolumeMounts,
@@ -1654,7 +1656,7 @@ func TestNewRunnerJobPLZTestRun(t *testing.T) {
 						Image:           "ghcr.io/grafana/k6-operator:latest-runner",
 						ImagePullPolicy: corev1.PullNever,
 						Name:            "k6",
-						Command:         []string{"k6", "run", "--quiet", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1", "--no-setup", "--no-teardown", "--linger"},
+						Command:         []string{"k6", "run", "--quiet", "/test/test.js", "--address=0.0.0.0:6565", "--paused", "--tag", "instance_id=1", "--tag", "job_name=test-1", "--tag", fmt.Sprintf("test_starttime='%s'", time.Now().Format("01/02/2006 15:04:05")), "--no-setup", "--no-teardown", "--linger"},
 						Env:             []corev1.EnvVar{},
 						Resources:       corev1.ResourceRequirements{},
 						VolumeMounts:    script.VolumeMount(),

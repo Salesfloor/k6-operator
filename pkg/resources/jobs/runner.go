@@ -75,7 +75,7 @@ func NewRunnerJob(k6 *v1alpha1.TestRun, index int, token string) (*batchv1.Job, 
 	command = append(command, "--tag", fmt.Sprintf("job_name=%s", name))
 
 	// [Salesfloor] Add a job start tag: for filtering test runs on Kibana dashboards
-	command = append(command, "--tag", fmt.Sprintf("test_starttime=%s", time.Now().Format("01/02/2006 15:04:05")))
+	command = append(command, "--tag", fmt.Sprintf("test_starttime='%s'", time.Now().Format("01/02/2006 15:04:05")))
 
 	if v1alpha1.IsTrue(k6, v1alpha1.CloudPLZTestRun) {
 		command = append(command, "--no-setup", "--no-teardown", "--linger")
